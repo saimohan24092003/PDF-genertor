@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rise Course Job Aid PDF Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2rem;
+      color: #333;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      text-align: center;
+      color: white;
+      margin-bottom: 0.5em;
+      font-size: 2.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .intro-text {
+      text-align: center;
+      color: white;
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .controls {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+    
+    .file-input-section {
+      margin-bottom: 1.5rem;
+    }
+    
+    .file-input-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    
+    #courseFolder {
+      width: 100%;
+      padding: 0.8rem;
+      border: 2px dashed #3498db;
+      border-radius: 8px;
+      background: #f8f9fa;
+      font-size: 1rem;
+    }
+    
+    .course-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .input-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .input-group label {
+      margin-bottom: 0.3rem;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    
+    .input-group input {
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    
+    .scan-section {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    #scanBtn {
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: white;
+      background: linear-gradient(45deg, #3498db, #2980b9);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    }
+    
+    #scanBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(52, 152, 219, 0.6);
+    }
+    
+    #scanBtn:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .status {
+      flex: 1;
+      padding: 0.8rem;
+      background: #ecf0f1;
+      border-radius: 6px;
+      font-style: italic;
+      color: #7f8c8d;
+    }
+    
+    .lessons-found {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      display: none;
+    }
+    
+    .lesson-item {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      border: 1px solid #e0e6ed;
+      border-radius: 8px;
+      margin-bottom: 0.8rem;
+      transition: all 0.3s ease;
+    }
+    
+    .lesson-item:hover {
+      border-color: #3498db;
+      background: #f8f9ff;
+    }
+    
+    .lesson-checkbox {
+      margin-right: 1rem;
+      transform: scale(1.2);
+    }
+    
+    .lesson-info {
+      flex: 1;
+    }
+    
+    .lesson-title {
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 0.3rem;
+    }
+    
+    .lesson-path {
+      font-size: 0.9rem;
+      color: #7f8c8d;
+      font-family: monospace;
+    }
+    
+    h2 {
+      color: #2980b9;
+      margin-top: 1.5em;
+      border-bottom: 2px solid #2980b9;
+      padding-bottom: 0.2em;
+    }
+    
+    h3 {
+      margin-top: 1em;
+      color: #34495e;
+    }
+    
+    .pdf-wrapper {
+      background: white;
+      padding: 2rem 3rem;
+      max-width: 850px;
+      margin: 0 auto 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    
+    .lesson-summary {
+      margin-bottom: 1.2em;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+    
+    a {
+      color: #1a73e8;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    
+    .reflection {
+      background: #fef9e7;
+      border-left: 6px solid #f1c40f;
+      padding: 1.5em;
+      margin: 2em 0;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    .reflection strong {
+      color: #d68910;
+      display: block;
+      margin-bottom: 0.5em;
+    }
+    
+    #downloadBtn {
+      display: block;
+      margin: 2rem auto;
+      padding: 1.2rem 3rem;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: white;
+      background: linear-gradient(45deg, #27ae60, #2ecc71);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+      transition: all 0.3s ease;
+    }
+    
+    #downloadBtn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(39, 174, 96, 0.6);
+    }
+    
+    #downloadBtn:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .lesson-content {
+      margin-top: 1rem;
+      border-left: 4px solid #2980b9;
+      padding-left: 1rem;
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    .lesson-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      margin: 1rem 0;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      background: #ecf0f1;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 1rem 0;
+      display: none;
+    }
+    
+    .progress-fill {
+      height: 8px;
+      background: linear-gradient(45deg, #3498db, #2980b9);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    
+    .error-message {
+      background: #ffe6e6;
+      color: #c0392b;
+      padding: 1rem;
+      border-radius: 6px;
+      border-left: 4px solid #e74c3c;
+      margin: 1rem 0;
+    }
+    
+    .success-message {
+      background: #e8f5e8;
+      color: #27ae60;
+      padding: 1rem;
+      border-radius: 6px;
+      border-left: 4px solid #2ecc71;
+      margin: 1rem 0;
+    }
+    
+    @media (max-width: 768px) {
+      .course-info {
+        grid-template-columns: 1fr;
+      }
+      
+      .scan-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .pdf-wrapper {
+        padding: 1rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📚 Rise Course Job Aid PDF Generator</h1>
+    <p class="intro-text">
+      Transform your Rise course content into a comprehensive PDF job aid.<br>
+      Upload your unzipped Rise course folder and generate a professional learning resource with all lessons and content.
+    </p>
+
+    <div class="controls">
+      <div class="file-input-section">
+        <label for="courseFolder" class="file-input-label">📁 Select Rise Course Folder:</label>
+        <input type="file" id="courseFolder" webkitdirectory directory multiple accept=".html,.htm,.json,.css,.js,.png,.jpg,.jpeg,.gif,.svg" />
+      </div>
+      
+      <div class="course-info">
+        <div class="input-group">
+          <label for="courseTitle">Course Title:</label>
+          <input type="text" id="courseTitle" placeholder="Enter course title" value="Rise eLearning Course" />
+        </div>
+        <div class="input-group">
+          <label for="authorName">Author:</label>
+          <input type="text" id="authorName" placeholder="Enter author name" value="Course Author" />
+        </div>
+      </div>
+      
+      <div class="scan-section">
+        <button id="scanBtn" disabled>🔍 Scan for Lessons</button>
+        <div id="scanStatus" class="status">Please select a course folder first</div>
+      </div>
+      
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <div id="lessonsFound" class="lessons-found">
+      <h3>📋 Found Lessons:</h3>
+      <div id="lessonsList"></div>
+      <button id="selectAllBtn">Select All</button>
+      <button id="deselectAllBtn">Deselect All</button>
+    </div>
+
+    <div id="pdfContent"></div>
+    <button id="downloadBtn" disabled>📥 Download PDF</button>
+  </div>
+
+<script>
+  let courseFiles = [];
+  let detectedLessons = [];
+  
+  const courseFolderInput = document.getElementById('courseFolder');
+  const scanBtn = document.getElementById('scanBtn');
+  const scanStatus = document.getElementById('scanStatus');
+  const lessonsFound = document.getElementById('lessonsFound');
+  const lessonsList = document.getElementById('lessonsList');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const pdfContentDiv = document.getElementById('pdfContent');
+  const progressBar = document.getElementById('progressBar');
+  const progressFill = document.getElementById('progressFill');
+  const selectAllBtn = document.getElementById('selectAllBtn');
+  const deselectAllBtn = document.getElementById('deselectAllBtn');
+
+  // Handle folder selection
+  courseFolderInput.addEventListener('change', function(e) {
+    courseFiles = Array.from(e.target.files);
+    if (courseFiles.length > 0) {
+      scanBtn.disabled = false;
+      scanStatus.textContent = `${courseFiles.length} files selected. Ready to scan for lessons.`;
+      scanStatus.style.color = '#27ae60';
+    } else {
+      scanBtn.disabled = true;
+      scanStatus.textContent = 'Please select a course folder first';
+      scanStatus.style.color = '#7f8c8d';
+    }
+    lessonsFound.style.display = 'none';
+    downloadBtn.disabled = true;
+  });
+
+  // Scan for Rise lessons
+  scanBtn.addEventListener('click', async function() {
+    scanBtn.disabled = true;
+    scanStatus.textContent = 'Scanning for Rise lessons...';
+    scanStatus.style.color = '#3498db';
+    
+    detectedLessons = [];
+    
+    // Look for HTML files that could be Rise lessons
+    const htmlFiles = courseFiles.filter(file => 
+      file.name.toLowerCase().endsWith('.html') || file.name.toLowerCase().endsWith('.htm')
+    );
+    
+    for (const file of htmlFiles) {
+      try {
+        const content = await readFileAsText(file);
+        
+        // Check if it's a Rise lesson by looking for Rise-specific markers
+        if (isRiseLesson(content, file.name)) {
+          const lessonTitle = extractLessonTitle(content, file.name);
+          detectedLessons.push({
+            file: file,
+            title: lessonTitle,
+            path: file.webkitRelativePath || file.name,
+            content: content
+          });
+        }
+      } catch (err) {
+        console.warn(`Error reading file ${file.name}:`, err);
+      }
+    }
+    
+    if (detectedLessons.length > 0) {
+      displayFoundLessons();
+      scanStatus.innerHTML = `✅ Found ${detectedLessons.length} Rise lesson(s)`;
+      scanStatus.style.color = '#27ae60';
+    } else {
+      scanStatus.innerHTML = `❌ No Rise lessons found. Make sure you've selected the correct course folder.`;
+      scanStatus.style.color = '#e74c3c';
+    }
+    
+    scanBtn.disabled = false;
+  });
+
+  // Read file as text
+  function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  }
+
+  // Check if HTML file is a Rise lesson
+  function isRiseLesson(content, filename) {
+    const riseMarkers = [
+      'rise-player',
+      'rise-content',
+      'articulate',
+      'data-rise',
+      'rise-lesson',
+      'storyline',
+      'articulate-content'
+    ];
+    
+    const contentLower = content.toLowerCase();
+    return riseMarkers.some(marker => contentLower.includes(marker)) ||
+           filename.toLowerCase().includes('lesson') ||
+           filename.toLowerCase().includes('module') ||
+           filename.toLowerCase().includes('chapter');
+  }
+
+  // Extract lesson title from HTML content
+  function extractLessonTitle(content, filename) {
+    // Try to extract title from HTML
+    const titleMatch = content.match(/<title[^>]*>([^<]+)<\/title>/i);
+    if (titleMatch && titleMatch[1] && !titleMatch[1].includes('Rise') && titleMatch[1].trim().length > 0) {
+      return titleMatch[1].trim();
+    }
+    
+    // Try to find h1 tags
+    const h1Match = content.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+    if (h1Match && h1Match[1]) {
+      return h1Match[1].trim();
+    }
+    
+    // Fallback to filename
+    return filename.replace(/\.[^/.]+$/, "").replace(/[-_]/g, ' ');
+  }
+
+  // Display found lessons
+  function displayFoundLessons() {
+    lessonsList.innerHTML = '';
+    
+    detectedLessons.forEach((lesson, index) => {
+      const lessonDiv = document.createElement('div');
+      lessonDiv.className = 'lesson-item';
+      lessonDiv.innerHTML = `
+        <input type="checkbox" class="lesson-checkbox" id="lesson-${index}" checked>
+        <div class="lesson-info">
+          <div class="lesson-title">${lesson.title}</div>
+          <div class="lesson-path">${lesson.path}</div>
+        </div>
+      `;
+      lessonsList.appendChild(lessonDiv);
+    });
+    
+    lessonsFound.style.display = 'block';
+    downloadBtn.disabled = false;
+  }
+
+  // Select/Deselect all lessons
+  selectAllBtn.addEventListener('click', () => {
+    document.querySelectorAll('.lesson-checkbox').forEach(cb => cb.checked = true);
+  });
+
+  deselectAllBtn.addEventListener('click', () => {
+    document.querySelectorAll('.lesson-checkbox').forEach(cb => cb.checked = false);
+  });
+
+  // Generate PDF
+  downloadBtn.addEventListener('click', async function() {
+    downloadBtn.disabled = true;
+    progressBar.style.display = 'block';
+    
+    const selectedLessons = [];
+    document.querySelectorAll('.lesson-checkbox:checked').forEach((cb, index) => {
+      const lessonIndex = parseInt(cb.id.split('-')[1]);
+      selectedLessons.push(detectedLessons[lessonIndex]);
+    });
+    
+    if (selectedLessons.length === 0) {
+      alert('Please select at least one lesson to include in the PDF.');
+      downloadBtn.disabled = false;
+      progressBar.style.display = 'none';
+      return;
+    }
+    
+    await generatePDF(selectedLessons);
+  });
+
+  async function generatePDF(selectedLessons) {
+    pdfContentDiv.innerHTML = '';
+    
+    // Add course header
+    const header = document.createElement('div');
+    header.classList.add('pdf-wrapper');
+    header.innerHTML = `
+      <h1>📘 ${document.getElementById('courseTitle').value}</h1>
+      <h3>👨‍🏫 Author: ${document.getElementById('authorName').value}</h3>
+      <p><strong>Generated:</strong> ${new Date().toLocaleDateString()}</p>
+      <div class="reflection">
+        <strong>💭 Course Reflection:</strong><br>
+        What are the key concepts you want to remember from this course?<br><br>
+        <em>Use this space to write your personal takeaways and action items.</em>
+      </div>
+    `;
+    pdfContentDiv.appendChild(header);
+    
+    // Process each selected lesson
+    for (let i = 0; i < selectedLessons.length; i++) {
+      const lesson = selectedLessons[i];
+      const progress = ((i + 1) / selectedLessons.length) * 100;
+      progressFill.style.width = `${progress}%`;
+      
+      const lessonDiv = document.createElement('div');
+      lessonDiv.classList.add('pdf-wrapper');
+      
+      // Clean and process lesson content
+      let cleanContent = cleanRiseContent(lesson.content);
+      
+      lessonDiv.innerHTML = `
+        <h2>📖 ${lesson.title}</h2>
+        <p class="lesson-summary"><strong>Source:</strong> ${lesson.path}</p>
+        <div class="lesson-content">
+          ${cleanContent}
+        </div>
+        <div class="reflection">
+          <strong>💡 Key Takeaways:</strong><br>
+          <em>What did you learn from this lesson?</em>
+        </div>
+      `;
+      
+      pdfContentDiv.appendChild(lessonDiv);
+      
+      // Add page break except for last lesson
+      if (i < selectedLessons.length - 1) {
+        lessonDiv.style.pageBreakAfter = 'always';
+      }
+    }
+    
+    // Generate the PDF
+    try {
+      await html2pdf()
+        .set({
+          margin: 0.5,
+          filename: `${document.getElementById('courseTitle').value.replace(/[^a-zA-Z0-9]/g, '_')}_JobAid.pdf`,
+          html2canvas: { 
+            scale: 2, 
+            logging: false,
+            useCORS: true,
+            allowTaint: true
+          },
+          jsPDF: { 
+            unit: 'in', 
+            format: 'a4', 
+            orientation: 'portrait' 
+          }
+        })
+        .from(pdfContentDiv)
+        .save();
+        
+      scanStatus.innerHTML = '✅ PDF generated successfully!';
+      scanStatus.style.color = '#27ae60';
+    } catch (error) {
+      scanStatus.innerHTML = '❌ Error generating PDF. Please try again.';
+      scanStatus.style.color = '#e74c3c';
+      console.error('PDF generation error:', error);
+    }
+    
+    downloadBtn.disabled = false;
+    progressBar.style.display = 'none';
+    progressFill.style.width = '0%';
+  }
+
+  // Clean Rise content for PDF
+  function cleanRiseContent(content) {
+    // Remove script tags
+    content = content.replace(/<script[\s\S]*?<\/script>/gi, '');
+    
+    // Remove style tags (keep only essential styling)
+    content = content.replace(/<style[\s\S]*?<\/style>/gi, '');
+    
+    // Remove Rise-specific elements that won't work in PDF
+    content = content.replace(/<div[^>]*rise-player[^>]*>[\s\S]*?<\/div>/gi, '');
+    content = content.replace(/<div[^>]*class="[^"]*rise[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
+    
+    // Extract main content area
+    const bodyMatch = content.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+    if (bodyMatch) {
+      content = bodyMatch[1];
+    }
+    
+    // Remove navigation elements
+    content = content.replace(/<nav[\s\S]*?<\/nav>/gi, '');
+    content = content.replace(/<div[^>]*nav[^>]*>[\s\S]*?<\/div>/gi, '');
+    
+    // Convert relative image paths to data URLs (if needed)
+    // This would require additional processing for embedded images
+    
+    return content;
+  }
+</script>
+
+</body>
+</html>
