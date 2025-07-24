@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rise Course Job Aid PDF Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f4f8;
+      padding: 2rem;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 0.2em;
+    }
+    h2 {
+      color: #2980b9;
+      margin-top: 1.5em;
+      border-bottom: 2px solid #2980b9;
+      padding-bottom: 0.2em;
+    }
+    h3 {
+      margin-top: 1em;
+      color: #34495e;
+    }
+    .pdf-wrapper {
+      background: white;
+      padding: 2rem 3rem;
+      max-width: 850px;
+      margin: 0 auto;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      page-break-after: always;
+    }
+    .lesson-summary {
+      margin-bottom: 1.2em;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+    a {
+      color: #1a73e8;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    /* Page break between lessons in PDF */
+    .page-break {
+      page-break-after: always;
+    }
+    /* Reflection box style */
+    .reflection {
+      background: #fef9e7;
+      border-left: 6px solid #f1c40f;
+      padding: 1em;
+      margin-top: 2em;
+      font-style: italic;
+      color: #7d6608;
+    }
+    /* Button style */
+    #downloadBtn {
+      display: block;
+      margin: 2rem auto;
+      padding: 1rem 2.5rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: white;
+      background-color: #27ae60;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(39, 174, 96, 0.5);
+      transition: background-color 0.3s ease;
+    }
+    #downloadBtn:hover {
+      background-color: #219150;
+    }
+    /* Styling loaded lesson content */
+    .lesson-content {
+      margin-top: 1rem;
+      border-left: 4px solid #2980b9;
+      padding-left: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Rise Course Job Aid & Summary</h1>
+  <p style="text-align:center; font-style: italic; max-width: 700px; margin: 0 auto 2rem;">
+    This PDF contains an overview and detailed content of your Rise lessons.<br>
+    Click "Download PDF" below to save a professional course guide with clickable links.
+  </p>
+
+  <div id="pdfContent"></div>
+
+  <button id="downloadBtn" disabled>Download PDF</button>
+
+<script>
+  const lessons = [
+    {
+      id: 'lesson1',
+      title: 'Lesson 1: Introduction to HTML',
+      summary: 'Understand the basics of HTML structure, tags, and page layout. Learn how to build the skeleton of any webpage.',
+      url: 'lessons/lesson1.html'
+    },
+    {
+      id: 'lesson2',
+      title: 'Lesson 2: CSS Styling Fundamentals',
+      summary: 'Explore how CSS styles HTML elements with colors, fonts, layouts, and responsive design techniques.',
+      url: 'lessons/lesson2.html'
+    },
+    // Add more lessons here as needed
+  ];
+
+  const pdfContentDiv = document.getElementById('pdfContent');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  async function loadAllLessons() {
+    pdfContentDiv.innerHTML = ''; // Clear previous content
+
+    // Add Course Title and Author Header (you can customize)
+    const header = document.createElement('div');
+    header.classList.add('pdf-wrapper');
+    header.innerHTML = `
+      <h1>📘 Your Course Title</h1>
+      <h3>Author: John Doe</h3>
+      <div class="reflection">
+        <strong>Reflection Question:</strong><br>
+        What is one key takeaway from this course?
+      </div>
+    `;
+    pdfContentDiv.appendChild(header);
+
+    for (const lesson of lessons) {
+      const lessonDiv = document.createElement('div');
+      lessonDiv.classList.add('pdf-wrapper');
+
+      // Add lesson title and summary
+      lessonDiv.innerHTML = `
+        <h2>${lesson.title}</h2>
+        <p class="lesson-summary">${lesson.summary}</p>
+        <a href="${lesson.url}" target="_blank">View lesson online</a>
+        <div class="lesson-content" id="content-${lesson.id}">
+          <em>Loading lesson content...</em>
+        </div>
+      `;
+      pdfContentDiv.appendChild(lessonDiv);
+
+      // Fetch and inject full lesson content
+      try {
+        const response = await fetch(lesson.url);
+        if (!response.ok) throw new Error('Failed to load lesson content');
+        let html = await response.text();
+
+        // Remove all <script> tags to prevent Rise JS from running in PDF
+        html = html.replace(/<script[\s\S]*?<\/script>/gi, '');
+
+        // Inject cleaned HTML inside lesson content div
+        document.getElementById(`content-${lesson.id}`).innerHTML = html;
+      } catch (err) {
+        document.getElementById(`content-${lesson.id}`).innerHTML = `<p style="color:red;">Error loading content: ${err.message}</p>`;
+      }
+    }
+    downloadBtn.disabled = false;
+  }
+
+  function generatePDF() {
+    // Before generating, add page breaks between lessons for PDF
+    const wrappers = pdfContentDiv.querySelectorAll('.pdf-wrapper');
+    wrappers.forEach((wrapper, index) => {
+      if (index !== wrappers.length - 1) {
+        wrapper.style.pageBreakAfter = 'always';
+      }
+    });
+
+    // Generate PDF from pdfContentDiv
+    html2pdf()
+      .set({
+        margin: 0.5,
+        filename: 'Rise_Course_JobAid.pdf',
+        html2canvas: { scale: 2, logging: false },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+      })
+      .from(pdfContentDiv)
+      .save();
+  }
+
+  // Load all lessons on page load
+  loadAllLessons();
+
+  // Attach PDF button handler
+  downloadBtn.addEventListener('click', generatePDF);
+</script>
+
+</body>
+</html>
